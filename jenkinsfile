@@ -1,0 +1,80 @@
+pipeline {
+
+  agent {label 'docker'}
+  
+  stages {
+    stage ('create k8 folder in not available')
+         {	 
+	 steps {
+	    sh '''
+		  
+		  mkdir -p k8/project_1
+		  mkdir -p k8/backups
+          
+          '''		         			 		  
+	  }
+  
+  }
+    stage (' Check if alredy file exit or not '){
+	  steps {
+	    sh ''' 
+		  
+		  cd k8/project_1
+		  
+		  if [ -n "$(find . -maxdepth 1 -type f)" ]; then
+		  
+		    cd ../backups/
+		  
+		  timestamp=$(date +"%Y%m%d_%H%M%S")
+		  backup_dir="backup_${timestamp}"
+          
+          mkdir -p "${backup_dir}"
+		  shopt -s dotglob
+          mv ../project_1/* "${backup_dir}"
+          shopt -u dotglob	
+         		  
+
+         echo ">>> Backup complete! Old files moved to ${BACKUP_DIR}."
+         echo ">>> Directory is now clean. Proceeding to git clone."		  
+		  
+		 fi
+		 
+		 cd ../project_1/
+		 
+		git clone https://github.com/NSingh205/kubernetes8.git .
+		
+	  '''
+	  }
+	  }
+	  
+    
+    stage ('rsyn clone file to k8 machine')
+      {
+	   steps {
+	   
+	    sh '''
+		cd k8
+		 rsync -av -e "ssh -o StrictHostKeyChecking=no" project_1/ nilesh@10.11.13.21:/home/nilesh/k8/project_1/
+		 
+		 '''
+		
+	   }
+	  
+	  }
+
+    stage ('ssh in k8 machine')
+    {
+        steps {
+            sh ''' 
+              "ssh nilesh@10.11.13.21
+               cd k8/project_1/
+               kubectl delete --all
+               kubectl create -f .
+               kubectl get all
+               "
+            
+            '''
+        }
+    }
+}
+}

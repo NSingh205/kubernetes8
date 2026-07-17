@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: my-result-app
+  name: result
   labels:
     app: result
 spec:
