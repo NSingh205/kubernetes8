@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: my-voter-app
+  name: vote
   labels:
     app: vote
 spec:
